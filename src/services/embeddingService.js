@@ -1,4 +1,13 @@
-import { pipeline } from '@huggingface/transformers';
+import { pipeline, env } from '@huggingface/transformers';
+
+// On Vercel (and most serverless hosts), only /tmp is writable — the
+// library's default cache dir (./.cache, relative to the module) would
+// fail there. /tmp is wiped between cold starts, so the ~90MB model
+// re-downloads on the first request after each one; that's an accepted
+// latency tradeoff for staying serverless-compatible, not a bug.
+if (process.env.VERCEL) {
+  env.cacheDir = '/tmp/transformers-cache';
+}
 
 // The embedding model has an effective ~256-token context window, so only
 // roughly the first ~1500-2000 characters of a resume meaningfully shape
