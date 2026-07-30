@@ -18,7 +18,8 @@ import {
   Users,
   ChevronLeft,
   ChevronRight,
-  HelpCircle
+  HelpCircle,
+  Search
 } from 'lucide-react';
 
 const ToastContext = createContext(null);
@@ -69,6 +70,7 @@ export default function Layout({ children }) {
   const navItems = [
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
     { name: 'Resume Screener', path: '/resumes', icon: Users },
+    { name: 'Job Search', path: '/jobs', icon: Search },
     { name: 'Interview Prep', path: '/interview-prep', icon: HelpCircle },
     { name: 'Converter', path: '/convert', icon: RefreshCw }
   ];
