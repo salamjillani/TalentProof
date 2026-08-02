@@ -123,7 +123,7 @@ export default function Layout({ children }) {
             <div className="bg-brand-500/10 dark:bg-brand-500/20 p-1.5 rounded-lg">
               <FileText className="w-5 h-5 text-brand-500 animate-pulse" />
             </div>
-            <span className="bg-gradient-to-r from-brand-600 to-indigo-500 dark:from-brand-400 dark:to-indigo-400 bg-clip-text text-transparent">TalentProof</span>
+            <span>TalentProof</span>
           </Link>
           <div className="flex items-center gap-2">
             <button
@@ -159,12 +159,12 @@ export default function Layout({ children }) {
         `}>
           {/* Sidebar Header */}
           <div className="p-5 flex items-center justify-between border-b border-slate-150/50 dark:border-slate-900/40 h-[73px]">
-            <Link href="/" className="flex items-center gap-3 font-extrabold text-xl text-brand-600 dark:text-brand-400 overflow-hidden shrink-0">
+            <Link href="/" className="flex items-center gap-3 font-extrabold text-xl text-brand-600 dark:text-brand-400 min-w-0">
               <div className="bg-brand-500/10 dark:bg-brand-500/20 p-2 rounded-xl border border-brand-500/20 shadow-sm shrink-0">
                 <FileText className="w-6 h-6 text-brand-500" />
               </div>
               {!isCollapsed && (
-                <span className="bg-gradient-to-r from-brand-600 via-indigo-500 to-indigo-650 dark:from-brand-400 dark:via-indigo-400 dark:to-brand-300 bg-clip-text text-transparent tracking-tight animate-fade-in font-extrabold">
+                <span className="tracking-tight animate-fade-in font-extrabold truncate">
                   TalentProof
                 </span>
               )}
@@ -258,7 +258,7 @@ export default function Layout({ children }) {
           {/* Sidebar Footer */}
           <div className="p-4 border-t border-slate-150/50 dark:border-slate-900/40 flex items-center justify-between gap-2 overflow-hidden shrink-0">
             {!isCollapsed && (
-              <span className="text-xs text-slate-400 font-semibold tracking-wider animate-fade-in">RAG EDITION</span>
+              <span className="text-xs text-slate-400 font-semibold tracking-wider animate-fade-in">TALENTPROOF</span>
             )}
             <button
               onClick={() => setDarkMode(!darkMode)}
