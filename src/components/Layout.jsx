@@ -36,6 +36,11 @@ export const useRole = () => useContext(RoleContext);
 // the "Viewing As" toggle again; nothing else needs to change.
 const JOB_SEEKER_ROLE_ENABLED = false;
 
+// Job Search (live Adzuna postings + fit ranking) is fully built and
+// working, but kept off the visible nav for now, same reasoning as the
+// Job Seeker role above. Flip to true to bring it back into the sidebar.
+const JOB_SEARCH_ENABLED = false;
+
 export default function Layout({ children }) {
   const pathname = usePathname();
   const [darkMode, setDarkMode] = useState(false);
@@ -97,7 +102,7 @@ export default function Layout({ children }) {
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
     { name: 'Summarizer', path: '/summarize', icon: Sparkles },
     { name: 'Resume Screener', path: '/resumes', icon: Users },
-    { name: 'Job Search', path: '/jobs', icon: Search },
+    ...(JOB_SEARCH_ENABLED ? [{ name: 'Job Search', path: '/jobs', icon: Search }] : []),
     { name: 'Interview Prep', path: '/interview-prep', icon: HelpCircle },
     { name: 'Converter', path: '/convert', icon: RefreshCw }
   ];
