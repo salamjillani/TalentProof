@@ -66,6 +66,7 @@ export async function POST(request) {
           matchedSkills: analysis.matchedSkills || [],
           missingSkills: analysis.missingSkills || [],
           justification: analysis.justification || 'No analysis available.',
+          evidence: analysis.evidence || [],
           interviewQuestions: analysis.interviewQuestions || [],
           embedding
         });
@@ -79,6 +80,7 @@ export async function POST(request) {
           matchedSkills: [],
           missingSkills: [],
           justification: `Analysis failed: ${err.message}`,
+          evidence: [],
           interviewQuestions: [],
           embedding: null
         });

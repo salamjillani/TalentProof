@@ -1,12 +1,6 @@
 import { NextResponse } from 'next/server';
 import db from '@/services/db';
-import { searchJobs } from '@/services/jobSearchService';
-import { embedText } from '@/services/embeddingService';
-import { cosineSimilarity } from '@/services/vectorSearch';
-
-// Cap on how many real postings get embedded+ranked per request, to bound
-// latency (each is a local model call, not free of cost in time).
-const MAX_JOBS_TO_RANK = 20;
+import { searchJobs, rankJobsByFit } from '@/services/jobSearchService';
 
 // Two request shapes:
 //   { role, location, country }                 -> live postings, unranked
@@ -49,24 +43,11 @@ export async function POST(request) {
       });
     }
 
-    const toRank = jobs.slice(0, MAX_JOBS_TO_RANK);
-    const remainder = jobs.slice(MAX_JOBS_TO_RANK).map(j => ({ ...j, fitScore: null }));
-
-    const ranked = [];
-    for (const job of toRank) {
-      try {
-        const jobEmbedding = await embedText(`${job.title}. ${job.description}`);
-        ranked.push({ ...job, fitScore: Math.round(cosineSimilarity(candidate.embedding, jobEmbedding) * 100) });
-      } catch (embedErr) {
-        console.error(`Failed to embed job posting "${job.title}":`, embedErr);
-        ranked.push({ ...job, fitScore: null });
-      }
-    }
-    ranked.sort((a, b) => (b.fitScore ?? -1) - (a.fitScore ?? -1));
+    const rankedJobs = await rankJobsByFit(jobs, candidate.embedding);
 
     return NextResponse.json({
       success: true,
-      jobs: [...ranked, ...remainder],
+      jobs: rankedJobs,
       ranked: true,
       rankedAgainst: candidate.candidateName
     });

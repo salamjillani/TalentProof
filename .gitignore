@@ -16,6 +16,9 @@
 /data
 /uploads
 
+# presentation materials (not app code)
+/presentation
+
 # misc
 .DS_Store
 *.pem

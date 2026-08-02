@@ -19,10 +19,10 @@ const DB_DIR = path.join(baseDir, 'data');
 const DB_FILE = path.join(DB_DIR, 'db.json');
 const UPLOADS_DIR = path.join(baseDir, 'uploads');
 
-const BUCKET = process.env.KVDB_BUCKET_ID || 'resumeiq_rag_9f3a7c1e';
+const BUCKET = process.env.KVDB_BUCKET_ID || 'talentproof_9f3a7c1e';
 const KV_URL = `https://kvdb.io/${BUCKET}`;
 
-let inMemoryDb = { resumeSessions: [], conversions: [] };
+let inMemoryDb = { resumeSessions: [], conversions: [], summarySessions: [] };
 let useInMemory = !isWritable;
 
 if (!isWritable) {
@@ -53,7 +53,7 @@ function initDb() {
     if (!fs.existsSync(DB_FILE)) {
       fs.writeFileSync(
         DB_FILE,
-        JSON.stringify({ resumeSessions: [], conversions: [] }, null, 2),
+        JSON.stringify({ resumeSessions: [], conversions: [], summarySessions: [] }, null, 2),
         'utf8'
       );
     }
@@ -85,7 +85,7 @@ function readDb() {
     return JSON.parse(data);
   } catch (error) {
     console.error('Error reading JSON DB, resetting...', error);
-    return { resumeSessions: [], conversions: [] };
+    return { resumeSessions: [], conversions: [], summarySessions: [] };
   }
 }
 
@@ -174,6 +174,32 @@ module.exports = {
     const db = readDb();
     if (!db.conversions) return false;
     db.conversions = db.conversions.filter(c => c.id !== id);
+    writeDb(db);
+    return true;
+  },
+
+  getSummarySessions: () => {
+    const db = readDb();
+    return db.summarySessions || [];
+  },
+
+  getSummarySession: (id) => {
+    const db = readDb();
+    return (db.summarySessions || []).find(s => s.id === id) || null;
+  },
+
+  saveSummarySession: (session) => {
+    const db = readDb();
+    if (!db.summarySessions) db.summarySessions = [];
+    db.summarySessions.push(session);
+    writeDb(db);
+    return session;
+  },
+
+  deleteSummarySession: (id) => {
+    const db = readDb();
+    if (!db.summarySessions) return false;
+    db.summarySessions = db.summarySessions.filter(s => s.id !== id);
     writeDb(db);
     return true;
   },

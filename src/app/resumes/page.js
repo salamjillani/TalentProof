@@ -23,7 +23,10 @@ import {
   HelpCircle,
   TrendingUp,
   AlertTriangle,
-  GitCompareArrows
+  GitCompareArrows,
+  Quote,
+  CheckCircle2,
+  ShieldAlert
 } from 'lucide-react';
 
 export default function ResumeScreener() {
@@ -753,6 +756,42 @@ export default function ResumeScreener() {
                 </div>
 
               </div>
+
+              {/* Evidence: verbatim resume passages backing the matched skills */}
+              {selectedCandidate.evidence && selectedCandidate.evidence.length > 0 && (
+                <div className="space-y-2.5 pt-1">
+                  <h4 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+                    <Quote className="w-3.5 h-3.5 text-brand-500" />
+                    Evidence — Why This Score
+                  </h4>
+                  <div className="space-y-2">
+                    {selectedCandidate.evidence.map((ev, eIdx) => (
+                      <div
+                        key={eIdx}
+                        className="p-3.5 bg-slate-50 dark:bg-slate-950/40 border border-slate-150 dark:border-slate-850 rounded-xl space-y-1.5"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="px-2 py-0.5 bg-brand-500/10 text-brand-655 dark:text-brand-400 border border-brand-500/20 rounded-md text-[10px] font-bold">
+                            {ev.skill}
+                          </span>
+                          {ev.verified ? (
+                            <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-650 dark:text-emerald-400">
+                              <CheckCircle2 className="w-3 h-3" /> Verified in resume text
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1 text-[10px] font-bold text-amber-650 dark:text-amber-400">
+                              <ShieldAlert className="w-3 h-3" /> Paraphrased, unconfirmed
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-600 dark:text-slate-350 leading-relaxed font-medium italic">
+                          &ldquo;{ev.quote}&rdquo;
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Mock Screening Questions */}
               <div className="space-y-3 pt-2">

@@ -19,12 +19,22 @@ import {
   ChevronLeft,
   ChevronRight,
   HelpCircle,
-  Search
+  Search,
+  Sparkles,
+  Briefcase
 } from 'lucide-react';
 
 const ToastContext = createContext(null);
+const RoleContext = createContext(null);
 
 export const useToast = () => useContext(ToastContext);
+export const useRole = () => useContext(RoleContext);
+
+// The Job Seeker view (Career Assistant, role-based nav) is fully built and
+// working, but kept out of the visible demo for now — presented verbally as
+// a planned enhancement rather than shown live. Flip this to true to expose
+// the "Viewing As" toggle again; nothing else needs to change.
+const JOB_SEEKER_ROLE_ENABLED = false;
 
 export default function Layout({ children }) {
   const pathname = usePathname();
@@ -33,7 +43,13 @@ export default function Layout({ children }) {
   const [isCollapsed, setIsCollapsed] = useState(false); // desktop collapse
   const [toasts, setToasts] = useState([]);
 
-  // Initialize theme and sidebar collapse from localStorage
+  // No real authentication behind this — a visible view-switch standing in
+  // for role-based access during the demo/presentation. Production would
+  // back this with real accounts and server-enforced route protection, not
+  // just a client-side nav filter.
+  const [role, setRole] = useState('hr');
+
+  // Initialize theme, sidebar collapse, and role from localStorage
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -41,7 +57,17 @@ export default function Layout({ children }) {
 
     const savedCollapse = localStorage.getItem('sidebar-collapsed');
     setIsCollapsed(savedCollapse === 'true');
+
+    if (JOB_SEEKER_ROLE_ENABLED) {
+      const savedRole = localStorage.getItem('userRole');
+      if (savedRole === 'jobseeker' || savedRole === 'hr') setRole(savedRole);
+    }
   }, []);
+
+  const switchRole = (newRole) => {
+    setRole(newRole);
+    localStorage.setItem('userRole', newRole);
+  };
 
   const showToast = (message, type = 'info', duration = 4000) => {
     const id = Math.random().toString(36).substring(2, 9);
@@ -67,16 +93,28 @@ export default function Layout({ children }) {
     localStorage.setItem('sidebar-collapsed', newState.toString());
   };
 
-  const navItems = [
+  const hrNavItems = [
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
+    { name: 'Summarizer', path: '/summarize', icon: Sparkles },
     { name: 'Resume Screener', path: '/resumes', icon: Users },
     { name: 'Job Search', path: '/jobs', icon: Search },
     { name: 'Interview Prep', path: '/interview-prep', icon: HelpCircle },
     { name: 'Converter', path: '/convert', icon: RefreshCw }
   ];
 
+  const jobSeekerNavItems = [
+    { name: 'Dashboard', path: '/', icon: LayoutDashboard },
+    { name: 'Career Assistant', path: '/career-assistant', icon: Briefcase },
+    { name: 'Summarizer', path: '/summarize', icon: Sparkles },
+    { name: 'Interview Prep', path: '/interview-prep', icon: HelpCircle },
+    { name: 'Converter', path: '/convert', icon: RefreshCw }
+  ];
+
+  const navItems = role === 'jobseeker' ? jobSeekerNavItems : hrNavItems;
+
   return (
     <ToastContext.Provider value={{ showToast }}>
+    <RoleContext.Provider value={{ role, switchRole }}>
       <div className="min-h-screen flex flex-col md:flex-row bg-[#f8fafc] dark:bg-[#040114] text-slate-800 dark:text-slate-100 transition-colors duration-300">
 
         {/* Mobile Header */}
@@ -85,7 +123,7 @@ export default function Layout({ children }) {
             <div className="bg-brand-500/10 dark:bg-brand-500/20 p-1.5 rounded-lg">
               <FileText className="w-5 h-5 text-brand-500 animate-pulse" />
             </div>
-            <span className="bg-gradient-to-r from-brand-600 to-indigo-500 dark:from-brand-400 dark:to-indigo-400 bg-clip-text text-transparent">ResumeIQ RAG</span>
+            <span className="bg-gradient-to-r from-brand-600 to-indigo-500 dark:from-brand-400 dark:to-indigo-400 bg-clip-text text-transparent">TalentProof</span>
           </Link>
           <div className="flex items-center gap-2">
             <button
@@ -127,7 +165,7 @@ export default function Layout({ children }) {
               </div>
               {!isCollapsed && (
                 <span className="bg-gradient-to-r from-brand-600 via-indigo-500 to-indigo-650 dark:from-brand-400 dark:via-indigo-400 dark:to-brand-300 bg-clip-text text-transparent tracking-tight animate-fade-in font-extrabold">
-                  ResumeIQ RAG
+                  TalentProof
                 </span>
               )}
             </Link>
@@ -148,6 +186,41 @@ export default function Layout({ children }) {
               <X className="w-5 h-5" />
             </button>
           </div>
+
+          {/* Role Switch (view-based only, no real auth — see comment above) */}
+          {JOB_SEEKER_ROLE_ENABLED && (
+          <div className="px-3 pt-4">
+            {isCollapsed ? (
+              <button
+                onClick={() => switchRole(role === 'hr' ? 'jobseeker' : 'hr')}
+                className="w-full flex items-center justify-center p-2.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-500 hover:text-brand-600 dark:hover:text-brand-400 transition cursor-pointer"
+                title={role === 'hr' ? 'Viewing as HR — switch to Job Seeker' : 'Viewing as Job Seeker — switch to HR'}
+              >
+                {role === 'hr' ? <Users className="w-4 h-4" /> : <Briefcase className="w-4 h-4" />}
+              </button>
+            ) : (
+              <div className="space-y-1.5 animate-fade-in">
+                <span className="block text-[10px] font-bold text-slate-400 dark:text-slate-550 uppercase tracking-wider px-1">
+                  Viewing As
+                </span>
+                <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
+                  <button
+                    onClick={() => switchRole('hr')}
+                    className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-xs font-bold transition cursor-pointer ${role === 'hr' ? 'bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400 shadow-xs' : 'text-slate-500 dark:text-slate-400'}`}
+                  >
+                    <Users className="w-3.5 h-3.5" /> HR
+                  </button>
+                  <button
+                    onClick={() => switchRole('jobseeker')}
+                    className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-xs font-bold transition cursor-pointer ${role === 'jobseeker' ? 'bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400 shadow-xs' : 'text-slate-500 dark:text-slate-400'}`}
+                  >
+                    <Briefcase className="w-3.5 h-3.5" /> Job Seeker
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+          )}
 
           {/* Navigation Links */}
           <nav className="flex-1 px-3 py-6 space-y-1.5">
@@ -263,6 +336,7 @@ export default function Layout({ children }) {
           to { width: 0%; }
         }
       `}</style>
+    </RoleContext.Provider>
     </ToastContext.Provider>
   );
 }

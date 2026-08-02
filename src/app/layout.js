@@ -5,7 +5,7 @@ import Layout from "@/components/Layout";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "ResumeIQ RAG - Retrieval-Powered Resume Intelligence",
+  title: "TalentProof - Evidence-Backed Resume Intelligence",
   description: "Bulk resume screening with real cross-candidate RAG search, similarity matching, interview prep, and file conversion.",
 };
 

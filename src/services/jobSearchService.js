@@ -1,4 +1,6 @@
 import axios from 'axios';
+import { embedText } from './embeddingService';
+import { cosineSimilarity } from './vectorSearch';
 
 const ADZUNA_APP_ID = process.env.ADZUNA_APP_ID;
 const ADZUNA_APP_KEY = process.env.ADZUNA_APP_KEY;
@@ -53,4 +55,36 @@ export async function searchJobs({ role, location = '', country = DEFAULT_COUNTR
     created: job.created,
     category: job.category?.label || null
   }));
+}
+
+// Cap on how many real postings get embedded+ranked per call, to bound
+// latency (each is a local model call, not free of cost in time).
+const MAX_JOBS_TO_RANK = 20;
+
+/**
+ * Re-ranks a list of real job postings by semantic fit against a resume
+ * embedding, by embedding each posting's title+description and comparing
+ * via cosine similarity. Shared by both the recruiter "rank by candidate"
+ * flow and the job-seeker self-service flow — the math is identical,
+ * only where the embedding comes from differs.
+ * @param {Array} jobs - result of searchJobs()
+ * @param {number[]} resumeEmbedding
+ */
+export async function rankJobsByFit(jobs, resumeEmbedding) {
+  const toRank = jobs.slice(0, MAX_JOBS_TO_RANK);
+  const remainder = jobs.slice(MAX_JOBS_TO_RANK).map(j => ({ ...j, fitScore: null }));
+
+  const ranked = [];
+  for (const job of toRank) {
+    try {
+      const jobEmbedding = await embedText(`${job.title}. ${job.description}`);
+      ranked.push({ ...job, fitScore: Math.round(cosineSimilarity(resumeEmbedding, jobEmbedding) * 100) });
+    } catch (embedErr) {
+      console.error(`Failed to embed job posting "${job.title}":`, embedErr);
+      ranked.push({ ...job, fitScore: null });
+    }
+  }
+  ranked.sort((a, b) => (b.fitScore ?? -1) - (a.fitScore ?? -1));
+
+  return [...ranked, ...remainder];
 }
