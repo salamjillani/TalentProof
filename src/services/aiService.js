@@ -253,3 +253,37 @@ In 1-2 sentences, explain why Candidate B is a similar profile to Candidate A. P
 
   return await generateText(prompt);
 }
+
+/**
+ * Drafts a candidate email personalized to their real evidence-backed score,
+ * for a recruiter to review and send. This never sends anything itself —
+ * see emailService.js for the actual send step, which requires the
+ * recruiter's own connected email account.
+ * @param {'interview_invite'|'rejection'} type
+ */
+export async function draftCandidateEmail(application, jobTitle, type) {
+  const kind = type === 'interview_invite'
+    ? 'inviting them to the next interview stage, expressing genuine enthusiasm about their matched skills'
+    : 'letting them down for this specific role, professionally and kindly, without being generic or robotic';
+
+  const prompt = `You are a recruiter writing a real email to a job candidate. Write an email ${kind}.
+
+Candidate name: ${application.candidateName}
+Role applied for: "${jobTitle}"
+Match score: ${application.matchPercentage}%
+Matched skills: ${(application.matchedSkills || []).join(', ') || 'none recorded'}
+Missing skills: ${(application.missingSkills || []).join(', ') || 'none recorded'}
+Recruiter's assessment notes: ${application.justification || 'none recorded'}
+
+Your output must be a single, valid JSON object matching the schema below. Do not output any notes, markdown codeblock tick fences, or introductory text. Just the raw JSON.
+
+Schema:
+{
+  "subject": "A short, real email subject line",
+  "body": "The full email body, written like a real person, addressed to the candidate by name, signed off generically as 'The Hiring Team' (no fabricated sender name)."
+}`;
+
+  const responseText = await generateText(prompt);
+  const cleanedText = cleanJsonString(responseText);
+  return JSON.parse(cleanedText);
+}

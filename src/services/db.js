@@ -22,7 +22,7 @@ const UPLOADS_DIR = path.join(baseDir, 'uploads');
 const BUCKET = process.env.KVDB_BUCKET_ID || 'talentproof_9f3a7c1e';
 const KV_URL = `https://kvdb.io/${BUCKET}`;
 
-let inMemoryDb = { resumeSessions: [], conversions: [], summarySessions: [] };
+let inMemoryDb = { resumeSessions: [], conversions: [], summarySessions: [], jobPostings: [], applications: [] };
 let useInMemory = !isWritable;
 
 if (!isWritable) {
@@ -53,7 +53,7 @@ function initDb() {
     if (!fs.existsSync(DB_FILE)) {
       fs.writeFileSync(
         DB_FILE,
-        JSON.stringify({ resumeSessions: [], conversions: [], summarySessions: [] }, null, 2),
+        JSON.stringify({ resumeSessions: [], conversions: [], summarySessions: [], jobPostings: [], applications: [] }, null, 2),
         'utf8'
       );
     }
@@ -85,7 +85,7 @@ function readDb() {
     return JSON.parse(data);
   } catch (error) {
     console.error('Error reading JSON DB, resetting...', error);
-    return { resumeSessions: [], conversions: [], summarySessions: [] };
+    return { resumeSessions: [], conversions: [], summarySessions: [], jobPostings: [], applications: [] };
   }
 }
 
@@ -200,6 +200,71 @@ module.exports = {
     const db = readDb();
     if (!db.summarySessions) return false;
     db.summarySessions = db.summarySessions.filter(s => s.id !== id);
+    writeDb(db);
+    return true;
+  },
+
+  // ---------- Job Postings (public apply links) ----------
+  getJobPostings: () => {
+    const db = readDb();
+    return db.jobPostings || [];
+  },
+
+  getJobPosting: (id) => {
+    const db = readDb();
+    return (db.jobPostings || []).find(j => j.id === id) || null;
+  },
+
+  saveJobPosting: (posting) => {
+    const db = readDb();
+    if (!db.jobPostings) db.jobPostings = [];
+    db.jobPostings.push(posting);
+    writeDb(db);
+    return posting;
+  },
+
+  deleteJobPosting: (id) => {
+    const db = readDb();
+    if (!db.jobPostings) return false;
+    db.jobPostings = db.jobPostings.filter(j => j.id !== id);
+    writeDb(db);
+    return true;
+  },
+
+  // ---------- Applications (candidates who applied through a job posting) ----------
+  getApplications: (jobPostingId = null) => {
+    const db = readDb();
+    const applications = db.applications || [];
+    return jobPostingId ? applications.filter(a => a.jobPostingId === jobPostingId) : applications;
+  },
+
+  getApplication: (id) => {
+    const db = readDb();
+    return (db.applications || []).find(a => a.id === id) || null;
+  },
+
+  saveApplication: (application) => {
+    const db = readDb();
+    if (!db.applications) db.applications = [];
+    db.applications.push(application);
+    writeDb(db);
+    return application;
+  },
+
+  updateApplication: (id, updates) => {
+    const db = readDb();
+    if (!db.applications) return null;
+    const app = db.applications.find(a => a.id === id);
+    if (!app) return null;
+    Object.assign(app, updates);
+    writeDb(db);
+    return app;
+  },
+
+  deleteApplication: (id) => {
+    const db = readDb();
+    if (!db.applications) return false;
+    db.applications = db.applications.filter(a => a.id !== id);
     writeDb(db);
     return true;
   },
