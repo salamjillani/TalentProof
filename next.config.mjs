@@ -13,10 +13,14 @@ const nextConfig = {
   // onnxruntime-node's native binary (libonnxruntime.so.1 on Linux) is loaded
   // from a path Next's output file tracing doesn't statically detect, so it
   // gets silently dropped from the Vercel function bundle without this —
-  // causing "cannot open shared object file" at runtime. Only the Linux
-  // binaries are needed since Vercel functions run on Linux (x64 or arm64).
+  // causing "cannot open shared object file" at runtime. Scoped to just the
+  // routes that actually call the embedding model (x64 only, Vercel's
+  // default function architecture) — applying this to every route via '/*'
+  // added ~77MB (both linux archs) to every function and broke the deploy.
   outputFileTracingIncludes: {
-    '/*': ['./node_modules/onnxruntime-node/bin/napi-v3/linux/**/*'],
+    '/api/apply': ['./node_modules/onnxruntime-node/bin/napi-v3/linux/x64/**/*'],
+    '/api/resumes/analyze': ['./node_modules/onnxruntime-node/bin/napi-v3/linux/x64/**/*'],
+    '/api/resumes/search': ['./node_modules/onnxruntime-node/bin/napi-v3/linux/x64/**/*'],
   },
 };
 
