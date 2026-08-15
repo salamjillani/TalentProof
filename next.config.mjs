@@ -9,6 +9,15 @@ const nextConfig = {
   // disk, breaking the DOCX-to-PDF fallback converter. Excluding it from
   // bundling keeps its real on-disk module path intact.
   serverExternalPackages: ['@huggingface/transformers', 'onnxruntime-node', 'pdfkit'],
+
+  // onnxruntime-node's native binary (libonnxruntime.so.1 on Linux) is loaded
+  // from a path Next's output file tracing doesn't statically detect, so it
+  // gets silently dropped from the Vercel function bundle without this —
+  // causing "cannot open shared object file" at runtime. Only the Linux
+  // binaries are needed since Vercel functions run on Linux (x64 or arm64).
+  outputFileTracingIncludes: {
+    '/*': ['./node_modules/onnxruntime-node/bin/napi-v3/linux/**/*'],
+  },
 };
 
 export default nextConfig;
