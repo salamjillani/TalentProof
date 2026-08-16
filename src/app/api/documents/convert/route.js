@@ -47,10 +47,7 @@ export async function POST(request) {
     fs.writeFileSync(filePath, outputBuffer);
 
     if (!db.isWritable()) {
-      await fetch(`https://kvdb.io/${db.getBucketId()}/file_${conversionId}`, {
-        method: 'PUT',
-        body: outputBuffer
-      });
+      await db.saveFile(conversionId, outputBuffer);
     }
 
     await db.saveConversion({

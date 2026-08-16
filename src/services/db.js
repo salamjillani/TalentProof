@@ -19,13 +19,61 @@ const DB_DIR = path.join(baseDir, 'data');
 const DB_FILE = path.join(DB_DIR, 'db.json');
 const UPLOADS_DIR = path.join(baseDir, 'uploads');
 
-const BUCKET = process.env.KVDB_BUCKET_ID || 'talentproof_9f3a7c1e';
-const KV_URL = `https://kvdb.io/${BUCKET}`;
+const UPSTASH_URL = process.env.UPSTASH_REDIS_REST_URL;
+const UPSTASH_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
 
 const EMPTY_DB = { resumeSessions: [], conversions: [], summarySessions: [], jobPostings: [], applications: [] };
 
 let inMemoryDb = { ...EMPTY_DB };
 let useInMemory = !isWritable;
+
+// Raw string get/set/delete against Upstash Redis's REST API. Used both for
+// the single JSON db blob below and for binary file storage (base64-encoded)
+// by routes that need to persist uploaded/converted files when the
+// filesystem is read-only (serverless).
+async function kvGetRaw(key) {
+  if (!UPSTASH_URL || !UPSTASH_TOKEN) return null;
+  try {
+    const res = await fetch(`${UPSTASH_URL}/get/${encodeURIComponent(key)}`, {
+      headers: { Authorization: `Bearer ${UPSTASH_TOKEN}` },
+    });
+    if (!res.ok) return null;
+    const { result } = await res.json();
+    return result;
+  } catch (err) {
+    console.warn(`Upstash GET failed for ${key}:`, err.message);
+    return null;
+  }
+}
+
+async function kvSetRaw(key, value) {
+  if (!UPSTASH_URL || !UPSTASH_TOKEN) return false;
+  try {
+    const res = await fetch(`${UPSTASH_URL}/set/${encodeURIComponent(key)}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${UPSTASH_TOKEN}` },
+      body: value,
+    });
+    return res.ok;
+  } catch (err) {
+    console.error(`Upstash SET failed for ${key}:`, err.message);
+    return false;
+  }
+}
+
+async function kvDeleteRaw(key) {
+  if (!UPSTASH_URL || !UPSTASH_TOKEN) return false;
+  try {
+    const res = await fetch(`${UPSTASH_URL}/del/${encodeURIComponent(key)}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${UPSTASH_TOKEN}` },
+    });
+    return res.ok;
+  } catch (err) {
+    console.error(`Upstash DEL failed for ${key}:`, err.message);
+    return false;
+  }
+}
 
 // Ensure database directory and file exist
 function initDb() {
@@ -46,7 +94,7 @@ function initDb() {
 // Every serverless function invocation may land on a different instance
 // with its own module-level `inMemoryDb`, so a request that only reads a
 // stale local cache can miss data another instance already wrote to
-// kvdb.io moments earlier (this was the cause of "job posting no longer
+// Upstash moments earlier (this was the cause of "job posting no longer
 // exists" on a job that had just been created). Always await the real
 // fetch here instead of firing it in the background, so every read
 // reflects the latest known state, not whatever this instance happened
@@ -54,14 +102,13 @@ function initDb() {
 async function readDb() {
   if (useInMemory) {
     if (!isWritable) {
-      try {
-        const res = await fetch(`${KV_URL}/db_json`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data && typeof data === 'object') inMemoryDb = data;
+      const raw = await kvGetRaw('db_json');
+      if (raw) {
+        try {
+          inMemoryDb = JSON.parse(raw);
+        } catch (err) {
+          console.warn('Failed to parse DB from Upstash, using last known state:', err.message);
         }
-      } catch (err) {
-        console.warn('Failed to sync DB from kvdb.io, using last known state:', err.message);
       }
     }
     return inMemoryDb;
@@ -81,15 +128,7 @@ async function writeDb(data) {
   if (useInMemory) {
     inMemoryDb = data;
     if (!isWritable) {
-      try {
-        await fetch(`${KV_URL}/db_json`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
-        });
-      } catch (err) {
-        console.error('Failed to sync DB write to kvdb.io:', err);
-      }
+      await kvSetRaw('db_json', JSON.stringify(data));
     }
     return;
   }
@@ -261,12 +300,25 @@ module.exports = {
     return true;
   },
 
-  getUploadsDir: () => {
-    return UPLOADS_DIR;
+  // ---------- Binary file storage (converted documents) ----------
+  // Local disk when writable; base64-encoded through the same Upstash
+  // Redis store as the JSON db otherwise. Files are namespaced under
+  // `file_` so they don't collide with the `db_json` key.
+  saveFile: async (key, buffer) => {
+    return kvSetRaw(`file_${key}`, buffer.toString('base64'));
   },
 
-  getBucketId: () => {
-    return BUCKET;
+  getFile: async (key) => {
+    const b64 = await kvGetRaw(`file_${key}`);
+    return b64 ? Buffer.from(b64, 'base64') : null;
+  },
+
+  deleteFile: async (key) => {
+    return kvDeleteRaw(`file_${key}`);
+  },
+
+  getUploadsDir: () => {
+    return UPLOADS_DIR;
   },
 
   isWritable: () => {

@@ -15,11 +15,10 @@ export async function GET(request, { params }) {
     if (fs.existsSync(item.path)) {
       fileBuffer = fs.readFileSync(item.path);
     } else {
-      const res = await fetch(`https://kvdb.io/${db.getBucketId()}/file_${id}`);
-      if (!res.ok) {
+      fileBuffer = await db.getFile(id);
+      if (!fileBuffer) {
         return NextResponse.json({ success: false, error: 'Converted file not found in cloud storage.' }, { status: 404 });
       }
-      fileBuffer = Buffer.from(await res.arrayBuffer());
     }
     let mimeType = 'application/octet-stream';
     if (item.targetFormat === 'pdf') {
@@ -58,9 +57,7 @@ export async function DELETE(request, { params }) {
     }
 
     if (!db.isWritable()) {
-      await fetch(`https://kvdb.io/${db.getBucketId()}/file_${id}`, {
-        method: 'DELETE'
-      }).catch(err => console.error('Failed to delete file from kvdb.io:', err.message));
+      await db.deleteFile(id);
     }
 
     await db.deleteConversion(id);
