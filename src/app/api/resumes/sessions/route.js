@@ -3,7 +3,7 @@ import db from '@/services/db';
 
 export async function GET() {
   try {
-    const sessions = db.getResumeSessions();
+    const sessions = await db.getResumeSessions();
     // Sort newest sessions first
     const sorted = [...sessions].sort((a, b) => new Date(b.date) - new Date(a.date));
     return NextResponse.json({ success: true, sessions: sorted });

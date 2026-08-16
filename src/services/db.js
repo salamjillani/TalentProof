@@ -22,26 +22,10 @@ const UPLOADS_DIR = path.join(baseDir, 'uploads');
 const BUCKET = process.env.KVDB_BUCKET_ID || 'talentproof_9f3a7c1e';
 const KV_URL = `https://kvdb.io/${BUCKET}`;
 
-let inMemoryDb = { resumeSessions: [], conversions: [], summarySessions: [], jobPostings: [], applications: [] };
-let useInMemory = !isWritable;
+const EMPTY_DB = { resumeSessions: [], conversions: [], summarySessions: [], jobPostings: [], applications: [] };
 
-if (!isWritable) {
-  // Fetch initial database state on startup
-  fetch(`${KV_URL}/db_json`)
-    .then(res => {
-      if (res.ok) return res.json();
-      throw new Error('Not found');
-    })
-    .then(data => {
-      if (data && typeof data === 'object') {
-        inMemoryDb = data;
-        console.log('Successfully loaded DB from kvdb.io');
-      }
-    })
-    .catch(err => {
-      console.warn('Failed to load initial DB from kvdb.io, using default empty DB:', err.message);
-    });
-}
+let inMemoryDb = { ...EMPTY_DB };
+let useInMemory = !isWritable;
 
 // Ensure database directory and file exist
 function initDb() {
@@ -51,11 +35,7 @@ function initDb() {
       fs.mkdirSync(DB_DIR, { recursive: true });
     }
     if (!fs.existsSync(DB_FILE)) {
-      fs.writeFileSync(
-        DB_FILE,
-        JSON.stringify({ resumeSessions: [], conversions: [], summarySessions: [], jobPostings: [], applications: [] }, null, 2),
-        'utf8'
-      );
+      fs.writeFileSync(DB_FILE, JSON.stringify(EMPTY_DB, null, 2), 'utf8');
     }
   } catch (error) {
     console.error('Failed to initialize file DB, switching to in-memory:', error);
@@ -63,18 +43,26 @@ function initDb() {
   }
 }
 
-function readDb() {
+// Every serverless function invocation may land on a different instance
+// with its own module-level `inMemoryDb`, so a request that only reads a
+// stale local cache can miss data another instance already wrote to
+// kvdb.io moments earlier (this was the cause of "job posting no longer
+// exists" on a job that had just been created). Always await the real
+// fetch here instead of firing it in the background, so every read
+// reflects the latest known state, not whatever this instance happened
+// to have cached.
+async function readDb() {
   if (useInMemory) {
     if (!isWritable) {
-      // Sync from kvdb in background
-      fetch(`${KV_URL}/db_json`)
-        .then(res => {
-          if (res.ok) return res.json();
-        })
-        .then(data => {
-          if (data) inMemoryDb = data;
-        })
-        .catch(() => { });
+      try {
+        const res = await fetch(`${KV_URL}/db_json`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && typeof data === 'object') inMemoryDb = data;
+        }
+      } catch (err) {
+        console.warn('Failed to sync DB from kvdb.io, using last known state:', err.message);
+      }
     }
     return inMemoryDb;
   }
@@ -85,19 +73,23 @@ function readDb() {
     return JSON.parse(data);
   } catch (error) {
     console.error('Error reading JSON DB, resetting...', error);
-    return { resumeSessions: [], conversions: [], summarySessions: [], jobPostings: [], applications: [] };
+    return { ...EMPTY_DB };
   }
 }
 
-function writeDb(data) {
+async function writeDb(data) {
   if (useInMemory) {
     inMemoryDb = data;
     if (!isWritable) {
-      fetch(`${KV_URL}/db_json`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      }).catch(err => console.error('Failed to sync DB write to kvdb.io:', err));
+      try {
+        await fetch(`${KV_URL}/db_json`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+      } catch (err) {
+        console.error('Failed to sync DB write to kvdb.io:', err);
+      }
     }
     return;
   }
@@ -116,32 +108,32 @@ function writeDb(data) {
 }
 
 module.exports = {
-  getResumeSessions: () => {
-    const db = readDb();
+  getResumeSessions: async () => {
+    const db = await readDb();
     return db.resumeSessions || [];
   },
 
-  saveResumeSession: (session) => {
-    const db = readDb();
+  saveResumeSession: async (session) => {
+    const db = await readDb();
     if (!db.resumeSessions) db.resumeSessions = [];
     db.resumeSessions.push(session);
-    writeDb(db);
+    await writeDb(db);
     return session;
   },
 
-  deleteResumeSession: (id) => {
-    const db = readDb();
+  deleteResumeSession: async (id) => {
+    const db = await readDb();
     if (!db.resumeSessions) return false;
     db.resumeSessions = db.resumeSessions.filter(s => s.id !== id);
-    writeDb(db);
+    await writeDb(db);
     return true;
   },
 
   // Finds a single candidate result by its id across every past session.
   // Returns the candidate annotated with its parent session's id/targetRole/date,
   // or null if not found. Used by the "Find Similar Candidates" feature.
-  findCandidateById: (id) => {
-    const db = readDb();
+  findCandidateById: async (id) => {
+    const db = await readDb();
     const sessions = db.resumeSessions || [];
     for (const session of sessions) {
       const candidate = (session.results || []).find(r => r.id === id);
@@ -157,115 +149,115 @@ module.exports = {
     return null;
   },
 
-  getConversions: () => {
-    const db = readDb();
+  getConversions: async () => {
+    const db = await readDb();
     return db.conversions || [];
   },
 
-  saveConversion: (conversion) => {
-    const db = readDb();
+  saveConversion: async (conversion) => {
+    const db = await readDb();
     if (!db.conversions) db.conversions = [];
     db.conversions.push(conversion);
-    writeDb(db);
+    await writeDb(db);
     return conversion;
   },
 
-  deleteConversion: (id) => {
-    const db = readDb();
+  deleteConversion: async (id) => {
+    const db = await readDb();
     if (!db.conversions) return false;
     db.conversions = db.conversions.filter(c => c.id !== id);
-    writeDb(db);
+    await writeDb(db);
     return true;
   },
 
-  getSummarySessions: () => {
-    const db = readDb();
+  getSummarySessions: async () => {
+    const db = await readDb();
     return db.summarySessions || [];
   },
 
-  getSummarySession: (id) => {
-    const db = readDb();
+  getSummarySession: async (id) => {
+    const db = await readDb();
     return (db.summarySessions || []).find(s => s.id === id) || null;
   },
 
-  saveSummarySession: (session) => {
-    const db = readDb();
+  saveSummarySession: async (session) => {
+    const db = await readDb();
     if (!db.summarySessions) db.summarySessions = [];
     db.summarySessions.push(session);
-    writeDb(db);
+    await writeDb(db);
     return session;
   },
 
-  deleteSummarySession: (id) => {
-    const db = readDb();
+  deleteSummarySession: async (id) => {
+    const db = await readDb();
     if (!db.summarySessions) return false;
     db.summarySessions = db.summarySessions.filter(s => s.id !== id);
-    writeDb(db);
+    await writeDb(db);
     return true;
   },
 
   // ---------- Job Postings (public apply links) ----------
-  getJobPostings: () => {
-    const db = readDb();
+  getJobPostings: async () => {
+    const db = await readDb();
     return db.jobPostings || [];
   },
 
-  getJobPosting: (id) => {
-    const db = readDb();
+  getJobPosting: async (id) => {
+    const db = await readDb();
     return (db.jobPostings || []).find(j => j.id === id) || null;
   },
 
-  saveJobPosting: (posting) => {
-    const db = readDb();
+  saveJobPosting: async (posting) => {
+    const db = await readDb();
     if (!db.jobPostings) db.jobPostings = [];
     db.jobPostings.push(posting);
-    writeDb(db);
+    await writeDb(db);
     return posting;
   },
 
-  deleteJobPosting: (id) => {
-    const db = readDb();
+  deleteJobPosting: async (id) => {
+    const db = await readDb();
     if (!db.jobPostings) return false;
     db.jobPostings = db.jobPostings.filter(j => j.id !== id);
-    writeDb(db);
+    await writeDb(db);
     return true;
   },
 
   // ---------- Applications (candidates who applied through a job posting) ----------
-  getApplications: (jobPostingId = null) => {
-    const db = readDb();
+  getApplications: async (jobPostingId = null) => {
+    const db = await readDb();
     const applications = db.applications || [];
     return jobPostingId ? applications.filter(a => a.jobPostingId === jobPostingId) : applications;
   },
 
-  getApplication: (id) => {
-    const db = readDb();
+  getApplication: async (id) => {
+    const db = await readDb();
     return (db.applications || []).find(a => a.id === id) || null;
   },
 
-  saveApplication: (application) => {
-    const db = readDb();
+  saveApplication: async (application) => {
+    const db = await readDb();
     if (!db.applications) db.applications = [];
     db.applications.push(application);
-    writeDb(db);
+    await writeDb(db);
     return application;
   },
 
-  updateApplication: (id, updates) => {
-    const db = readDb();
+  updateApplication: async (id, updates) => {
+    const db = await readDb();
     if (!db.applications) return null;
     const app = db.applications.find(a => a.id === id);
     if (!app) return null;
     Object.assign(app, updates);
-    writeDb(db);
+    await writeDb(db);
     return app;
   },
 
-  deleteApplication: (id) => {
-    const db = readDb();
+  deleteApplication: async (id) => {
+    const db = await readDb();
     if (!db.applications) return false;
     db.applications = db.applications.filter(a => a.id !== id);
-    writeDb(db);
+    await writeDb(db);
     return true;
   },
 

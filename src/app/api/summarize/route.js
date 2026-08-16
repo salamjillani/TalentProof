@@ -47,7 +47,7 @@ export async function POST(request) {
         date: new Date().toISOString(),
         summary
       };
-      db.saveSummarySession(session);
+      await db.saveSummarySession(session);
 
       return NextResponse.json({ success: true, session });
     } finally {

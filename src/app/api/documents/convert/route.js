@@ -53,7 +53,7 @@ export async function POST(request) {
       });
     }
 
-    db.saveConversion({
+    await db.saveConversion({
       id: conversionId,
       originalName,
       targetName: outFileName,

@@ -5,7 +5,7 @@ import { getRecommendation, isValidStage } from '@/services/pipelineService';
 export async function GET(request, { params }) {
   try {
     const { id } = await params;
-    const application = db.getApplication(id);
+    const application = await db.getApplication(id);
     if (!application) {
       return NextResponse.json({ success: false, error: 'Application not found.' }, { status: 404 });
     }
@@ -31,7 +31,7 @@ export async function PATCH(request, { params }) {
       return NextResponse.json({ success: false, error: 'Invalid stage.' }, { status: 400 });
     }
 
-    const updated = db.updateApplication(id, { stage, stageUpdatedAt: new Date().toISOString() });
+    const updated = await db.updateApplication(id, { stage, stageUpdatedAt: new Date().toISOString() });
     if (!updated) {
       return NextResponse.json({ success: false, error: 'Application not found.' }, { status: 404 });
     }

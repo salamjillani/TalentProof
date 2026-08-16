@@ -103,7 +103,7 @@ export async function POST(request) {
       targetRole,
       results
     };
-    db.saveResumeSession(session);
+    await db.saveResumeSession(session);
 
     return NextResponse.json({ success: true, session });
   } catch (error) {

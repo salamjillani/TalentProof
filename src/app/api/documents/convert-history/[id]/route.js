@@ -5,7 +5,7 @@ import db from '@/services/db';
 export async function GET(request, { params }) {
   try {
     const { id } = await params;
-    const list = db.getConversions();
+    const list = await db.getConversions();
     const item = list.find(c => c.id === id);
     if (!item) {
       return NextResponse.json({ success: false, error: 'Conversion record not found.' }, { status: 404 });
@@ -43,7 +43,7 @@ export async function GET(request, { params }) {
 export async function DELETE(request, { params }) {
   try {
     const { id } = await params;
-    const list = db.getConversions();
+    const list = await db.getConversions();
     const item = list.find(c => c.id === id);
     if (!item) {
       return NextResponse.json({ success: false, error: 'Conversion record not found.' }, { status: 404 });
@@ -63,7 +63,7 @@ export async function DELETE(request, { params }) {
       }).catch(err => console.error('Failed to delete file from kvdb.io:', err.message));
     }
 
-    db.deleteConversion(id);
+    await db.deleteConversion(id);
     return NextResponse.json({ success: true, message: 'Conversion record deleted.' });
   } catch (error) {
     console.error('Failed to delete conversion record:', error);

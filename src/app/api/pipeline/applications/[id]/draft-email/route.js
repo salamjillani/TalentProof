@@ -11,16 +11,16 @@ export async function POST(request, { params }) {
       return NextResponse.json({ success: false, error: 'Invalid email type.' }, { status: 400 });
     }
 
-    const application = db.getApplication(id);
+    const application = await db.getApplication(id);
     if (!application) {
       return NextResponse.json({ success: false, error: 'Application not found.' }, { status: 404 });
     }
-    const job = db.getJobPosting(application.jobPostingId);
+    const job = await db.getJobPosting(application.jobPostingId);
 
     const draft = await draftCandidateEmail(application, job ? job.title : 'the role', type);
 
     const drafts = [...(application.emailDrafts || []), { ...draft, type, createdAt: new Date().toISOString(), sentAt: null }];
-    db.updateApplication(id, { emailDrafts: drafts });
+    await db.updateApplication(id, { emailDrafts: drafts });
 
     return NextResponse.json({ success: true, draft, draftIndex: drafts.length - 1 });
   } catch (error) {

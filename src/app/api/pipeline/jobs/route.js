@@ -4,7 +4,7 @@ import db from '@/services/db';
 
 export async function GET() {
   try {
-    const jobs = db.getJobPostings();
+    const jobs = await db.getJobPostings();
     const sorted = [...jobs].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     return NextResponse.json({ success: true, jobs: sorted });
   } catch (error) {
@@ -25,7 +25,7 @@ export async function POST(request) {
       description: (description || '').trim(),
       createdAt: new Date().toISOString(),
     };
-    db.saveJobPosting(posting);
+    await db.saveJobPosting(posting);
     return NextResponse.json({ success: true, job: posting });
   } catch (error) {
     console.error('Failed to create job posting:', error);

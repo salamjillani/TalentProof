@@ -4,7 +4,7 @@ import db from '@/services/db';
 export async function DELETE(request, { params }) {
   try {
     const { id } = await params;
-    const success = db.deleteResumeSession(id);
+    const success = await db.deleteResumeSession(id);
     return NextResponse.json({ success, message: 'Screening session deleted.' });
   } catch (error) {
     console.error('Failed to delete resume session:', error);

@@ -24,8 +24,8 @@ export function cosineSimilarity(a, b) {
  * until it's re-screened — it still exists in its session's results).
  * @param {object} db - the db.js service module
  */
-export function getAllCandidatesWithEmbeddings(db) {
-  const sessions = db.getResumeSessions();
+export async function getAllCandidatesWithEmbeddings(db) {
+  const sessions = await db.getResumeSessions();
   const candidates = [];
   for (const session of sessions) {
     for (const result of session.results || []) {

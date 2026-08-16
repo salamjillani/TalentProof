@@ -25,13 +25,13 @@ export async function POST(request) {
       return NextResponse.json({ success: false, error: 'candidateId is required.' }, { status: 400 });
     }
 
-    const source = db.findCandidateById(candidateId);
+    const source = await db.findCandidateById(candidateId);
     if (!source) {
       return NextResponse.json({ success: false, error: 'Candidate not found.' }, { status: 404 });
     }
 
     if (explainForId) {
-      const match = db.findCandidateById(explainForId);
+      const match = await db.findCandidateById(explainForId);
       if (!match) {
         return NextResponse.json({ success: false, error: 'Comparison candidate not found.' }, { status: 404 });
       }
@@ -51,7 +51,7 @@ export async function POST(request) {
       }, { status: 400 });
     }
 
-    const candidates = getAllCandidatesWithEmbeddings(db);
+    const candidates = await getAllCandidatesWithEmbeddings(db);
     const similar = topKSimilar(source.embedding, candidates, TOP_K, candidateId);
 
     const similarCandidates = similar.map(c => ({

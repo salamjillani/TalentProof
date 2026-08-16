@@ -5,7 +5,7 @@ import db from '@/services/db';
 export async function GET(request, { params }) {
   try {
     const { id } = await params;
-    const session = db.getSummarySession(id);
+    const session = await db.getSummarySession(id);
 
     if (!session) {
       return NextResponse.json({ success: false, error: 'Summary not found.' }, { status: 404 });

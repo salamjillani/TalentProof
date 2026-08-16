@@ -9,7 +9,7 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const jobPostingId = searchParams.get('jobPostingId');
 
-    const applications = db.getApplications(jobPostingId || null);
+    const applications = await db.getApplications(jobPostingId || null);
     const withRecommendation = applications
       .map(app => ({ ...app, embedding: undefined, recommendation: getRecommendation(app) }))
       .sort((a, b) => new Date(b.appliedAt) - new Date(a.appliedAt));

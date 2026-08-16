@@ -29,7 +29,7 @@ export async function POST(request) {
       return NextResponse.json({ success: false, error: 'Please upload your resume.' }, { status: 400 });
     }
 
-    const job = db.getJobPosting(jobPostingId);
+    const job = await db.getJobPosting(jobPostingId);
     if (!job) {
       return NextResponse.json({ success: false, error: 'This job posting no longer exists.' }, { status: 404 });
     }
@@ -95,7 +95,7 @@ export async function POST(request) {
       seenByRecruiter: false,
       emailDrafts: [],
     };
-    db.saveApplication(application);
+    await db.saveApplication(application);
 
     return NextResponse.json({ success: true, message: 'Your application has been received. Thank you for applying.' });
   } catch (error) {

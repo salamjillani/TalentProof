@@ -3,7 +3,7 @@ import db from '@/services/db';
 
 export async function GET() {
   try {
-    const list = db.getConversions();
+    const list = await db.getConversions();
     // Sort newest first
     const sorted = [...list].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
     return NextResponse.json({ success: true, conversions: sorted });

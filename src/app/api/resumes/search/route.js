@@ -19,7 +19,7 @@ export async function POST(request) {
       return NextResponse.json({ success: false, error: 'Search query cannot be empty.' }, { status: 400 });
     }
 
-    const candidates = getAllCandidatesWithEmbeddings(db);
+    const candidates = await getAllCandidatesWithEmbeddings(db);
     if (candidates.length === 0) {
       return NextResponse.json({
         success: true,

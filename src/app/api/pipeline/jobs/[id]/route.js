@@ -4,7 +4,7 @@ import db from '@/services/db';
 export async function GET(request, { params }) {
   try {
     const { id } = await params;
-    const job = db.getJobPosting(id);
+    const job = await db.getJobPosting(id);
     if (!job) {
       return NextResponse.json({ success: false, error: 'Job posting not found.' }, { status: 404 });
     }
@@ -18,7 +18,7 @@ export async function GET(request, { params }) {
 export async function DELETE(request, { params }) {
   try {
     const { id } = await params;
-    db.deleteJobPosting(id);
+    await db.deleteJobPosting(id);
     return NextResponse.json({ success: true, message: 'Job posting deleted.' });
   } catch (error) {
     console.error('Failed to delete job posting:', error);
