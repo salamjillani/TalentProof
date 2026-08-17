@@ -100,8 +100,8 @@ export default function ApplyPage({ params }) {
       <div className="min-h-screen flex items-center justify-center px-4">
         <div className="max-w-md text-center space-y-3">
           <AlertTriangle className="w-10 h-10 text-rose-500 mx-auto" />
-          <h1 className="text-lg font-bold text-slate-800">Job posting not found</h1>
-          <p className="text-sm text-slate-500">{jobError || 'This application link may have expired or been removed.'}</p>
+          <h1 className="text-lg font-bold text-slate-800 dark:text-slate-100">Job posting not found</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{jobError || 'This application link may have expired or been removed.'}</p>
         </div>
       </div>
     );
@@ -110,10 +110,10 @@ export default function ApplyPage({ params }) {
   if (submitted) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
-        <div className="max-w-md text-center space-y-3 bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
+        <div className="max-w-md text-center space-y-3 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-8">
           <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto" />
-          <h1 className="text-xl font-extrabold text-slate-800">Application Received</h1>
-          <p className="text-sm text-slate-500">
+          <h1 className="text-xl font-extrabold text-slate-800 dark:text-slate-100">Application Received</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
             Thank you for applying to <strong>{job.title}</strong>. The hiring team will review your application and be in touch if there&apos;s a fit.
           </p>
         </div>
@@ -125,30 +125,30 @@ export default function ApplyPage({ params }) {
     <div className="min-h-screen py-12 px-4">
       <div className="max-w-xl mx-auto space-y-6">
         <div className="text-center space-y-2">
-          <div className="inline-flex p-3 bg-brand-500/10 text-brand-600 rounded-xl border border-brand-500/20">
+          <div className="inline-flex p-3 bg-brand-500/10 text-brand-600 dark:text-brand-400 rounded-xl border border-brand-500/20">
             <Briefcase className="w-6 h-6" />
           </div>
-          <h1 className="text-2xl font-extrabold text-slate-800">{job.title}</h1>
+          <h1 className="text-2xl font-extrabold text-slate-800 dark:text-slate-100">{job.title}</h1>
           {job.description && (
-            <p className="text-sm text-slate-500 max-w-lg mx-auto whitespace-pre-line">{job.description}</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 max-w-lg mx-auto whitespace-pre-line">{job.description}</p>
           )}
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-5">
+        <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 space-y-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide">Your Name (optional)</label>
+              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Your Name (optional)</label>
               <input
                 type="text"
                 value={candidateName}
                 onChange={(e) => setCandidateName(e.target.value)}
                 placeholder="We'll also read this from your resume"
                 disabled={submitting}
-                className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-500"
               />
             </div>
             <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide">Your Email *</label>
+              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Your Email *</label>
               <input
                 type="email"
                 value={candidateEmail}
@@ -156,20 +156,20 @@ export default function ApplyPage({ params }) {
                 placeholder="you@example.com"
                 required
                 disabled={submitting}
-                className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-500"
               />
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide">Resume *</label>
+            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Resume *</label>
             <div
               onDragEnter={handleDrag}
               onDragOver={handleDrag}
               onDragLeave={handleDrag}
               onDrop={handleDrop}
               className={`relative py-8 border-2 border-dashed rounded-xl flex flex-col items-center justify-center text-center transition ${
-                dragActive ? 'border-brand-500 bg-brand-50/40' : 'border-slate-300 hover:border-brand-400'
+                dragActive ? 'border-brand-500 bg-brand-50/40 dark:bg-brand-500/10' : 'border-slate-300 dark:border-slate-700 hover:border-brand-400'
               }`}
             >
               <input
@@ -182,21 +182,21 @@ export default function ApplyPage({ params }) {
               />
               <label htmlFor="resume-file" className="absolute inset-0 cursor-pointer" />
               {file ? (
-                <span className="flex items-center gap-2 text-sm font-bold text-slate-700">
+                <span className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-200">
                   <FileText className="w-4 h-4 text-brand-500" /> {file.name}
                 </span>
               ) : (
                 <>
                   <Upload className="w-6 h-6 text-brand-500 mb-2" />
-                  <span className="text-sm font-bold text-slate-700">Drag and drop your resume</span>
-                  <span className="text-xs text-slate-400 mt-1">PDF or DOCX</span>
+                  <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Drag and drop your resume</span>
+                  <span className="text-xs text-slate-400 dark:text-slate-500 mt-1">PDF or DOCX</span>
                 </>
               )}
             </div>
           </div>
 
           {submitError && (
-            <p className="text-xs font-semibold text-rose-600 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2">{submitError}</p>
+            <p className="text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/30 rounded-lg px-3 py-2">{submitError}</p>
           )}
 
           <button

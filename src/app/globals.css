@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+/* Tailwind v4 defaults `dark:` to the prefers-color-scheme media query.
+   This app toggles a `.dark` class on <html> for a manual light/dark
+   switch (see Layout.jsx), so dark: has to be repointed at that class,
+   or every dark: utility in the app silently does nothing and the
+   toggle button has no effect at all. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-brand-50: #f4f5ff;
   --color-brand-100: #e9ecff;

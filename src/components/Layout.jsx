@@ -89,7 +89,7 @@ export default function Layout({ children }) {
         </div>
         <div className="fixed bottom-5 right-5 z-[100] flex flex-col gap-2.5 max-w-md w-full px-4 md:px-0">
           {toasts.map(toast => (
-            <div key={toast.id} className="p-4 rounded-2xl border shadow-lg bg-white border-slate-200 text-slate-800 text-sm font-semibold">
+            <div key={toast.id} className="p-4 rounded-2xl border shadow-lg bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 text-sm font-semibold">
               {toast.message}
             </div>
           ))}
