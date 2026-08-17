@@ -16,6 +16,7 @@ import {
   ChevronRight,
   ShieldCheck,
   AlertTriangle,
+  Inbox,
 } from 'lucide-react';
 import { STAGES, REJECTED, STAGE_LABELS } from '@/services/pipelineService';
 
@@ -93,6 +94,11 @@ export default function PipelinePage() {
     const link = `${window.location.origin}/apply/${jobId}`;
     navigator.clipboard.writeText(link);
     showToast('Apply link copied to clipboard.', 'success');
+  };
+
+  const copyApplyEmail = (email) => {
+    navigator.clipboard.writeText(email);
+    showToast('Apply email address copied to clipboard.', 'success');
   };
 
   const openApplication = async (app) => {
@@ -186,16 +192,28 @@ export default function PipelinePage() {
         )}
 
         {selectedJob && (
-          <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400 border-t border-slate-150 dark:border-slate-850 pt-3">
-            <span>Public apply link:</span>
-            <code className="bg-slate-100 dark:bg-slate-900 px-2 py-1 rounded text-brand-600 dark:text-brand-400">/apply/{selectedJob.id}</code>
-            <button onClick={() => copyApplyLink(selectedJob.id)} className="flex items-center gap-1 text-brand-600 dark:text-brand-400 hover:underline cursor-pointer">
-              <Copy className="w-3.5 h-3.5" /> Copy
-            </button>
-            {newCount > 0 && (
-              <span className="ml-auto px-2.5 py-1 bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 rounded-full font-bold">
-                {newCount} new
-              </span>
+          <div className="space-y-2 border-t border-slate-150 dark:border-slate-850 pt-3">
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
+              <span>Public apply link:</span>
+              <code className="bg-slate-100 dark:bg-slate-900 px-2 py-1 rounded text-brand-600 dark:text-brand-400">/apply/{selectedJob.id}</code>
+              <button onClick={() => copyApplyLink(selectedJob.id)} className="flex items-center gap-1 text-brand-600 dark:text-brand-400 hover:underline cursor-pointer">
+                <Copy className="w-3.5 h-3.5" /> Copy
+              </button>
+              {newCount > 0 && (
+                <span className="ml-auto px-2.5 py-1 bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 rounded-full font-bold">
+                  {newCount} new
+                </span>
+              )}
+            </div>
+            {selectedJob.applyEmail && (
+              <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                <Inbox className="w-3.5 h-3.5 shrink-0" />
+                <span>Or email resume to:</span>
+                <code className="bg-slate-100 dark:bg-slate-900 px-2 py-1 rounded text-brand-600 dark:text-brand-400">{selectedJob.applyEmail}</code>
+                <button onClick={() => copyApplyEmail(selectedJob.applyEmail)} className="flex items-center gap-1 text-brand-600 dark:text-brand-400 hover:underline cursor-pointer">
+                  <Copy className="w-3.5 h-3.5" /> Copy
+                </button>
+              </div>
             )}
           </div>
         )}

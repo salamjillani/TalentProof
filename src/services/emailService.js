@@ -41,3 +41,15 @@ export async function sendEmail({ to, subject, text }) {
 export function isEmailConfigured() {
   return !!(EMAIL_USER && EMAIL_APP_PASSWORD);
 }
+
+// Gmail's "+" addressing delivers you+anything@gmail.com straight to the
+// normal inbox, so each job posting gets its own tagged apply address for
+// free, with no separate mailbox. The Apps Script watcher reads the job ID
+// back out of the "To" header, which is what tells it which job posting an
+// emailed resume belongs to, deterministically, not by guessing from the
+// email's content.
+export function getApplyEmailAddress(jobPostingId) {
+  if (!EMAIL_USER || !EMAIL_USER.includes('@')) return null;
+  const [local, domain] = EMAIL_USER.split('@');
+  return `${local}+${jobPostingId}@${domain}`;
+}
